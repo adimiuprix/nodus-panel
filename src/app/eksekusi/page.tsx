@@ -26,7 +26,7 @@ export default function ApacheGUI() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-100 to-purple-200 p-8">
       <h1 className="text-4xl font-bold mb-6 text-pink-600 drop-shadow-md">
-        Apache Control GUI 💖
+        Apache Control GUI
       </h1>
 
       <div className="flex gap-4 mb-6">

@@ -1,32 +1,50 @@
-import { createShell } from "@oxog/shell-core";
-import { NextResponse } from "next/server";
+import { createShell } from "@oxog/shell-core"
+import { NextResponse } from "next/server"
 
-const shell = createShell();
-const START_VBS = "D:\\nodus-panel\\automation\\start_apache.vbs";
-const STOP_VBS = "D:\\nodus-panel\\automation\\stop_apache.vbs";
+const shell = createShell({
+    cwd: process.env.PATH_EXEC,
+    verbose: true
+});
 
 export async function POST(req: Request) {
   try {
-    const { action } = await req.json();
+    const { action } = await req.json()
 
     if (action === "start") {
-      await shell.exec(`cscript //nologo "${START_VBS}"`);
-      return NextResponse.json({ message: "💖 Apache sudah jalan!" });
+      shell.spawn("bin/apache/httpd-2.4.65/bin/httpd.exe", [],
+        {
+          detached: true,
+          stdio: "ignore"
+        }
+      )
+      return NextResponse.json({ message: "💖 Apache sudah jalan di background!" })
     }
 
     if (action === "stop") {
-      await shell.exec(`cscript //nologo "${STOP_VBS}"`);
-      return NextResponse.json({ message: "💔 Apache sudah berhenti!" });
+      // Stop Apache
+      await shell.exec("taskkill /IM httpd.exe /F")
+      
+      // Cek apakah php-cgi.exe ada
+      const check = await shell.exec("tasklist | findstr php-cgi.exe");
+
+      if (check.stdout && check.stdout.includes("php-cgi.exe")) {
+        await shell.exec("taskkill /IM php-cgi.exe /F");
+        return NextResponse.json({ message: "💔 Apache & FastCGI sudah dimatikan!" });
+      } else {
+        return NextResponse.json({ message: "💔 Apache dimatikan, FastCGI tidak ditemukan." });
+      }
     }
 
     if (action === "status") {
       const result = await shell.exec('tasklist', { silent: true, fatal: false });
-      const running = result.stdout.split('\n').some(line => line.toLowerCase().includes('httpd.exe'));
-      return NextResponse.json({ message: running ? "💖 Apache sedang jalan" : "💔 Apache mati" });
+      const running = result.stdout.split('\n').some(line => line.toLowerCase().includes('httpd.exe'))
+      return NextResponse.json({ message: running ? "💖 Apache sedang jalan" : "💔 Apache mati" })
     }
     
-    return NextResponse.json({ message: "Action tidak dikenal" }, { status: 400 });
-  } catch (e: any) {
-    return NextResponse.json({ message: `Error: ${e.message}` }, { status: 500 });
-  }
+    return NextResponse.json({ message: "Action tidak dikenal" }, { status: 400 })
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json({ message: `Error: ${e.message}` }, { status: 500 })
+    }
+    return NextResponse.json({ message: "Error: Unknown error" }, { status: 500 })  }
 }
