@@ -46,6 +46,8 @@ npm run build
 # Konfigurasi
 Nodus panel sudah include apache, namun masih perlu di konfigurasi sedikit.
 
-buka folder: d:/nodus-panel/bin/apache/httpd-2.4.65/bin
+buka folder: d:/nodus-panel/bin/apache/httpd-2.4.65/conf
 
-cari SRV_ROOT dan ganti absolut path apache.
+buka file: httpd.conf
+
+cari SRVROOT dan ganti absolut path sesuai letak drive nodus panel.
