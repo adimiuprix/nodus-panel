@@ -1,8 +1,8 @@
-export const QuickAction = ({ icon: Icon, label }: { icon: React.ComponentType<{ size?: number }>; label: string }) => (
-  <button className='btn btn-ghost justify-start w-full gap-3 border border-base-200 hover:bg-base-200/60'>
-    <span className='badge badge-primary badge-lg text-base-100 p-0 w-8 h-8 place-items-center grid'>
-        <Icon size={16} />
-    </span>
-    <span className='text-sm'>{label}</span>
+export const QuickAction = ({ icon: Icon, label, onClick, }: { icon: React.ComponentType<{ size?: number }>; label: string, onClick?: () => void }) => (
+  <button onClick={onClick} className="btn btn-ghost w-full justify-start gap-3 border border-base-200 hover:bg-base-200/50">
+    <div className="badge badge-primary w-8 h-8 p-0 grid place-items-center">
+      <Icon size={16} />
+    </div>
+    <span className="text-sm">{label}</span>
   </button>
 )

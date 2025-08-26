@@ -1,8 +1,8 @@
 
 export const StatCard = ({ title, value, ring }: { title: string; value: string; ring?: number }) => (
-  <div className='card bg-base-100 shadow-sm border border-base-200'>
+  <div className='card card-dash bg-base-100 shadow-sm border border-base-200'>
     <div className='card-body p-5 gap-3'>
-      <div className='text-sm text-base-content/60'>{title}</div>
+      <div className='card-title text-sm text-base-content/60'>{title}</div>
       <div className='flex items-center justify-between'>
         <div>
           <div className='text-4xl font-semibold tracking-tight'>{value}</div>

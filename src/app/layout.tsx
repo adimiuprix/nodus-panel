@@ -19,10 +19,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistMono.variable} antialiased`}>
+        <div className='min-h-screen bg-base-200'>
+          <div className='flex'>
+            <main className='flex-1'>
+              {children}
+            </main>
+          </div>
+        </div>
       </body>
     </html>
   );
