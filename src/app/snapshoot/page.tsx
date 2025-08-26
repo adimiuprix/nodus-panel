@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import React from 'react'
 import { Database, Plus, Upload, Users, MoreHorizontal, Bell, HelpCircle } from 'lucide-react'
-import { Container } from '../components/container'
+import { Container } from '../components/Segment'
 import { StatCard } from '../components/StatCard'
 import { QuickAction } from '../components/QuickAction'
 import { SideBar } from '../components/SideBar'

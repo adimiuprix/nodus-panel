@@ -1,7 +1,7 @@
 import { SideBar } from "./SideBar"
 import { Bell, HelpCircle } from 'lucide-react'
 
-export const TopBar = () => {
+export const HeadBar = () => {
     return(
         <div className='px-6 pt-6'>
             <div className='flex items-center justify-between'>
