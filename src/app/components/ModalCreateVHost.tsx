@@ -10,24 +10,26 @@ const ModalCreateVHost = () => {
 
     const handleCreate = async () => {
         try {
-            setLoading(true)
+            setLoading(true);
+
             const res = await fetch("/api/v_host_create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ domain }),
-            })
+            });
 
-            if (!res.ok) {
-                const errText = await res.text()
-                throw new Error(`Failed to create vhost: ${errText}`)
+            if (res.ok) {
+                alert('Vhost berhasil dibuat');
+            } else {
+                alert('Terjadi kesalahan, periksa server apache!');
             }
 
-            const data = await res.json()
-            console.log("Vhost created:", data);
-            (document.getElementById('create_v_host') as HTMLDialogElement).close()
+            // tutup modal
+            (document.getElementById('create_v_host') as HTMLDialogElement)?.close();
+
         } catch (error) {
-            console.error(error)
-            alert((error as Error).message)
+            console.error(error);
+            alert((error as Error).message || 'Terjadi kesalahan tidak terduga')
         } finally {
             setLoading(false)
         }

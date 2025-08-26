@@ -16,6 +16,9 @@
 # next.js
 /.next/
 /out/
+/.flowbite-react/*
+/.shell-transaction-backups/*
+
 
 # production
 /build

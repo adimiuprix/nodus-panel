@@ -1,22 +1,14 @@
 import { createShell } from "@oxog/shell-core"
 import { NextResponse } from "next/server"
 
-const shell = createShell({
-    cwd: process.env.PATH_EXEC,
-    verbose: true
-});
+const shell = createShell();
 
 export async function POST(req: Request) {
   try {
     const { action } = await req.json()
 
     if (action === "start") {
-      shell.spawn("bin/apache/httpd-2.4.65/bin/httpd.exe", [],
-        {
-          detached: true,
-          stdio: "ignore"
-        }
-      )
+      await shell.exec(`cmd /c start "" /B "D:/nodus-panel/bin/apache/httpd-2.4.65/bin/httpd.exe"`)
       return NextResponse.json({ message: "💖 Apache sudah jalan di background!" })
     }
 

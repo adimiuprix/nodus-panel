@@ -1,22 +1,19 @@
-import { createShell } from "@oxog/shell-core";
-import { NextResponse } from "next/server";
+import { createShell } from "@oxog/shell-core"
+import { NextResponse } from "next/server"
 
-const shell = createShell({
-    cwd: "D:/nodus-panel/automation/",
-    verbose: true
-});
+const shell = createShell()
 
 export async function POST() {
   try {
-    const result = await shell.exec(`cmd /c "mkcert.exe -help -client"`);
-    return NextResponse.json({ message: result.stdout });
+    await shell.exec("tasklist | findstr httpd.exe", { fatal: false })
+    return NextResponse.json({ message: 'apach belum jalan' })
     
   } catch (e: unknown) {
-    let message = "Unknown error";
+    let message = "Unknown error"
 
     if (e instanceof Error) {
-        message = e.message; // aman, karena TypeScript tahu ini Error
+        message = e.message
     }
-    return NextResponse.json({ message }, { status: 500 });
+    return NextResponse.json({ message }, { status: 500 })
   }
 }
