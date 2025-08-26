@@ -17,7 +17,9 @@ Kedepannya di masa depan Nodus panel bisa menjadi panel web server yang juga ber
 
 # Intallasi
 - unduh atau clone dulu
-```bash [git clone https://github.com/adimiuprix/nodus-panel](git clone https://github.com/adimiuprix/nodus-panel.git) ```
+```bash
+git clone https://github.com/adimiuprix/nodus-panel
+```
 - masuk ke dalam folder ```bash cd nodus-panel```
 - mulai install ```bash npm run install``` atau ```bash npm run i```
 - setelah installasi berhasil kalian jalankan build ```bash npm run build```
