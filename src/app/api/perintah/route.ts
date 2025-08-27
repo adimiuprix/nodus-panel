@@ -1,19 +1,19 @@
-import { createShell } from "@oxog/shell-core"
-import { NextResponse } from "next/server"
-
-const shell = createShell()
+import { createShell, Shell } from "@oxog/shell-core";
+import { NextResponse } from "next/server";
 
 export async function POST() {
-  try {
-    await shell.exec("tasklist | findstr httpd.exe", { fatal: false })
-    return NextResponse.json({ message: 'apach belum jalan' })
-    
-  } catch (e: unknown) {
-    let message = "Unknown error"
+  const shell: Shell = createShell({
+    cwd: process.cwd(),
+    verbose: true,
+    silent: false,
+  })
 
-    if (e instanceof Error) {
-        message = e.message
-    }
-    return NextResponse.json({ message }, { status: 500 })
+  console.log(process.cwd())
+
+  try {
+
+    return NextResponse.json({ message: "Berhasil menambahkan hosts & jalankan VBS" });
+  } catch (e: unknown) {
+    return NextResponse.json({ message: e instanceof Error ? e.message : "Unknown error" }, { status: 500 });
   }
 }

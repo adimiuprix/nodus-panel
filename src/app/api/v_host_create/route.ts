@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createShell, Shell, Transaction } from "@oxog/shell-core"
+import { spawn } from "child_process"
 
 interface PostBody {
   domain: string;
@@ -16,7 +17,7 @@ interface ErrorResponse {
 }
 
 export async function POST(req: Request): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
-  let body: PostBody;
+  let body: PostBody
   try {
     body = (await req.json()) as PostBody
   } catch {
@@ -28,7 +29,7 @@ export async function POST(req: Request): Promise<NextResponse<SuccessResponse |
     return NextResponse.json({ error: "Domain tidak boleh kosong" }, { status: 400 });
   }
 
-  const rootPath = `D:/nodus-panel/webroots/${domain}`;
+  const rootPath = `${process.cwd()}\webroots\${domain}`;
   const configPath = `etc/site-enabled/${domain}.conf`;
 
   const config = `
@@ -45,7 +46,7 @@ export async function POST(req: Request): Promise<NextResponse<SuccessResponse |
 `
 
   const shell: Shell = createShell({
-    cwd: "D:/nodus-panel/",
+    cwd: process.cwd(),
     verbose: true,
     silent: false
   })
@@ -56,24 +57,24 @@ export async function POST(req: Request): Promise<NextResponse<SuccessResponse |
     return NextResponse.json({ error: "Apache belum jalan", status: 400 }, { status: 400 })
   }
 
-  const injector = `
-  import { execSync } from "child_process";
-
-  execSync(
-    "powershell -Command \\"Add-Content -Path 'C:\\\\Windows\\\\System32\\\\drivers\\\\etc\\\\hosts' -Value ([Environment]::NewLine + '127.0.0.1     ${domain}')\\"",
-    { stdio: "inherit" }
-  )
-  `
-
-  const filePath = "D:/nodus-panel/automation/host.js"
+  const command = `Add-Content -Path 'C:\\Windows\\System32\\drivers\\etc\\hosts' -Value ([Environment]::NewLine + '127.0.0.1 ${domain} #Magic Nodus panel!')`
+  
+  // Membuat host
+  await new Promise<void>((resolve, reject) => {
+    spawn(
+      "powershell",
+      ["-Command", `Start-Process powershell -ArgumentList "${command.replace(/"/g, '""')}" -Verb RunAs`],
+      { stdio: "inherit" }
+    ).on("exit", (code) => (code === 0 ? resolve() : reject(new Error("Gagal atau dibatalkan UAC."))));
+  })
 
   try {
     await shell.transaction(async (tx: Transaction) => {
+      // Membuat config vhost
       await tx.writeFile(configPath, config)
+
+      // Membuat directory root
       await tx.mkdir(rootPath, { recursive: true })
-      await tx.writeFile(filePath, injector)
-      await tx.exec('cscript //nologo "D:\\nodus-panel\\automation\\host.vbs"')
-      await tx.remove("D:\\nodus-panel\\automation\\host.js")
     })
     return NextResponse.json({ success: true, domain })
   } catch (err: unknown) {
