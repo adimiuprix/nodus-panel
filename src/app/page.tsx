@@ -11,6 +11,16 @@ import ModalCreateVHost from './components/ModalCreateVHost'
 export default function Home(){
     const [showAlert, setShowAlert] = useState(false)
     const [stats, setStats] = useState(null)
+    const [totalHost, setTotalHost] = useState(null)
+
+    useEffect(() => {
+        fetch("/api/get_total_host")
+        .then(res => res.json())
+        .then(json => setTotalHost(json))
+        .catch(err => console.error(err))
+    }, [])
+
+    const total_host: number = totalHost?.count ?? 0
 
     useEffect(() => {
         async function fetchStats() {
@@ -35,7 +45,7 @@ export default function Home(){
 
     function handleClick(){
         setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 3000)
+        setTimeout(() => setShowAlert(false), 5000)
     }
 
     return(
@@ -48,7 +58,7 @@ export default function Home(){
 
                 {/* Stats cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
-                    <StatCard title="Total Vhost" value="24" />
+                    <StatCard title="Total Vhost" value={total_host.toString()} />
                     <StatCard title='CPU Usage (Avg)' value={`${cpu_usage.toString()}%`} ring={cpu_usage} />
                     <StatCard title='Memory Usage' value={`${mem_usage.toString()}%`} ring={mem_usage} />
                     <StatCard title='Disc Usage' value={`${disc_usage.toString()}Gb`} />
