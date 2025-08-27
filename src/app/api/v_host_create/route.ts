@@ -33,6 +33,7 @@ export async function POST(req: Request): Promise<NextResponse<SuccessResponse |
   const configPath = `etc/site-enabled/${domain}.conf`;
 
   const config = `
+# HTTP
 <VirtualHost *:80>
     ServerName ${domain}
     DocumentRoot "${rootPath}"
@@ -76,6 +77,13 @@ export async function POST(req: Request): Promise<NextResponse<SuccessResponse |
       // Membuat directory root
       await tx.mkdir(rootPath, { recursive: true })
     })
+
+    await shell.exec("taskkill /IM httpd.exe /F")
+    await shell.exec(`cmd /c start "" /B "bin/apache/httpd-2.4.65/bin/httpd.exe"`)
+
+    // copy file start page
+    await shell.copy('automation/index.html', `webroots/${domain}/index.html`)
+
     return NextResponse.json({ success: true, domain })
   } catch (err: unknown) {
     const e = err as { code?: string; message?: string }

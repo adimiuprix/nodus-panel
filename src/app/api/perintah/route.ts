@@ -8,6 +8,7 @@ export async function POST() {
     silent: false,
   })
 
+  await shell.copy('automation/index.html', 'webroots/truinep.com/index.html')
   console.log(process.cwd())
 
   try {
