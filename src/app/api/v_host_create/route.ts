@@ -29,7 +29,7 @@ export async function POST(req: Request): Promise<NextResponse<SuccessResponse |
     return NextResponse.json({ error: "Domain tidak boleh kosong" }, { status: 400 });
   }
 
-  const rootPath = `${process.cwd()}\webroots\${domain}`;
+  const rootPath = `${process.cwd()}/webroots/${domain}`;
   const configPath = `etc/site-enabled/${domain}.conf`;
 
   const config = `
