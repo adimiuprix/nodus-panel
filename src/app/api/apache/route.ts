@@ -1,7 +1,9 @@
 import { createShell } from "@oxog/shell-core"
 import { NextResponse } from "next/server"
 
-const shell = createShell();
+const shell = createShell({
+  
+})
 
 export async function POST(req: Request) {
   try {
