@@ -1,0 +1,25 @@
+{
+	"windowSettings": {
+		"width": 1935,
+		"height": 1043
+	},
+	"appSettings": {
+		"autoStart": false,
+		"minToTray": false,
+		"autoVhost": true,
+		"docRoot": "D:\\nodus-panel\\www",
+		"dataDir": "D:\\nodus-panel\\data",
+		"binDir": "D:\\nodus-panel\\bin",
+		"versionNginx": "v1.29.5",
+		"versionMysql": "v8.4.8",
+		"versionPhp": "v8.5.3",
+		"versionNode": "v25.7.0",
+		"portNginxHttp": 80,
+		"portNginxSsl": 443,
+		"portMysql": 3306,
+		"portNode": 3000
+	},
+	"phpVersions": {
+		"8.5.3": "D:\\nodus-panel\\bin\\php\\php-8.5.3"
+	}
+}
