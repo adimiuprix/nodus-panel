@@ -433,14 +433,14 @@ export default function App() {
         const { ipcRenderer } = window.require('electron');
 
         try {
-            // 1. Prepare Paths and Domain
-            // Use the name exactly as provided for the domain
+            // 1. Siapkan Jalur dan Domain
+            // Gunakan nama persis seperti yang diberikan untuk domain tersebut.
             const domain = name;
             const docRoot = settings.docRoot || 'www';
-            // Nginx prefers forward slashes even on Windows
+            // Nginx lebih menyukai garis miring ke depan bahkan pada Windows
             const projectRoot = `${docRoot}/${name}`.replace(/\\/g, '/');
 
-            // 2. Build Nginx Config Content
+            // 2. Buat Konten Konfigurasi Nginx
             const nginxConfig = `server {
     listen       80;
     server_name  ${domain} www.${domain};
@@ -467,7 +467,7 @@ export default function App() {
     }
 }`;
 
-            // 3. Create Nginx Config File via IPC
+            // 3. Buat File Konfigurasi Nginx via IPC
             const configResult = await ipcRenderer.invoke('create-nginx-config', {
                 filename: name,
                 content: nginxConfig,
@@ -479,7 +479,7 @@ export default function App() {
                 throw new Error(configResult.error || 'Failed to create Nginx config');
             }
 
-            // 4. Update projects.json via IPC
+            // 4. Perbarui projects.json melalui IPC
             const projects = await ipcRenderer.invoke('get-projects') || [];
             const fw = FRAMEWORKS.find(f => f.id === framework) || { name: framework, icon: 'fas fa-file-code' };
 
@@ -506,8 +506,8 @@ export default function App() {
             addTermLine(`[${getTimestamp()}] Project "${name}" created successfully!`, 'success');
             addToast(`Project "${name}" created!`, 'success');
 
-            // Refresh project tab if currently active (it will remount if we toggle or just wait for it to be visited)
-            // But since ProjectsTab loads in useEffect on mount, it will show the new data when the user switches to it.
+            // Refresh tab project jika saat ini aktif (akan di-remount jika kita toggle atau hanya menunggu untuk dikunjungi)
+            // Namun karena ProjectsTab dimuat di useEffect saat mount, ia akan menampilkan data baru ketika pengguna beralih ke sana.
 
         } catch (error) {
             console.error('Quick Create Error:', error);

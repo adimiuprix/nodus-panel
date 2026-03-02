@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { installServiceInternal, ensurePhpMyAdminConfig } from './serviceInstaller.js';
 
+// Daftarkan handler IPC untuk web
 export function registerWebHandler(ipcMainInstance, getMainWindow, context) {
     const { store, configDir, binDir, downloadDir } = context;
 
@@ -30,7 +31,7 @@ export function registerWebHandler(ipcMainInstance, getMainWindow, context) {
     ipcMain.handle('open-mysql-db', async (event) => {
         const mainWindow = getMainWindow();
 
-        // 1. Check MySQL
+        // 1. Periksa MySQL
         const isRunning = await new Promise((resolve) => {
             exec('tasklist /FI "IMAGENAME eq mysqld.exe"', (err, stdout = '') => {
                 resolve((stdout || '').toLowerCase().includes('mysqld.exe'));
@@ -47,7 +48,7 @@ export function registerWebHandler(ipcMainInstance, getMainWindow, context) {
             return { success: false };
         }
 
-        // 2. Check phpMyAdmin existence
+        // 2. Periksa keberadaan phpMyAdmin
         const pmaPath = path.join(configDir, 'data', 'phpmyadmin', 'index.php');
         if (!fs.existsSync(pmaPath)) {
             const { response } = await dialog.showMessageBox(mainWindow, {
@@ -73,7 +74,7 @@ export function registerWebHandler(ipcMainInstance, getMainWindow, context) {
             }
         }
 
-        // 3. All good, ensure config and open browser
+        // 3. Semuanya baik, pastikan konfigurasi dan buka browser
         await ensurePhpMyAdminConfig(binDir);
         shell.openExternal('http://localhost/phpmyadmin');
         return { success: true };

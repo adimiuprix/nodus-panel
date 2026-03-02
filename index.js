@@ -41,7 +41,7 @@ const store = new Store({
     }
 });
 
-// Force generate default config to disk if missing or schema changed
+// Paksa pembuatan konfigurasi default ke disk jika hilang atau skema berubah.
 store.set('appSettings', store.get('appSettings'));
 store.set('windowSettings', store.get('windowSettings'));
 
@@ -49,8 +49,9 @@ import { registerServiceStatusHandler } from './src/backend/serviceStatus.js';
 import { registerServiceInstallerHandler } from './src/backend/serviceInstaller.js';
 import { registerServiceRunnerHandler } from './src/backend/serviceRunner.js';
 import { registerWebHandler } from './src/backend/webHandler.js';
+import { registerNginxHandler } from './src/backend/nginxHandler.js';
 
-// Ensure directories exist
+// Pastikan direktori ada
 const downloadDir = path.join(configDir, 'download');
 const binDir = path.join(configDir, 'bin');
 const wwwDir = path.join(configDir, 'www');
@@ -58,7 +59,7 @@ const wwwDir = path.join(configDir, 'www');
 if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true });
 if (!fs.existsSync(binDir)) fs.mkdirSync(binDir, { recursive: true });
 
-// Ensure www/index.php exists
+// Pastikan www/index.php ada
 if (!fs.existsSync(wwwDir)) {
     fs.mkdirSync(wwwDir, { recursive: true });
 }
@@ -219,8 +220,8 @@ function createWindow() {
         icon: path.join(__dirname, 'assets', 'icon.png'),
     });
 
-    // Dev mode: load from Vite dev server for HMR
-    // Production: load from built dist/
+    // Dev mode: Muat dari server pengembang Vite untuk HMR.
+    // Production: Muat dari dist/ yang sudah dibangun.
     const devServerUrl = process.env.VITE_DEV_SERVER_URL;
     if (devServerUrl) {
         mainWindow.loadURL(devServerUrl);
@@ -244,7 +245,7 @@ function createWindow() {
 app.whenReady().then(() => {
     createWindow();
 
-    // Create tray icon
+    // Buat ikon tray
     const iconPath = path.join(__dirname, 'assets', 'icon.png');
     const trayIcon = nativeImage.createFromPath(iconPath);
     tray = new Tray(trayIcon);
@@ -268,7 +269,7 @@ app.whenReady().then(() => {
     tray.on('double-click', () => mainWindow.show());
 });
 
-// IPC handlers for window controls
+// Penangan IPC untuk kontrol jendela
 ipcMain.on('window-minimize', () => {
     mainWindow.minimize();
 });
@@ -299,7 +300,7 @@ ipcMain.handle('set-config', (event, key, value) => {
     return true;
 });
 
-// Check service status
+// Periksa status layanan
 registerServiceStatusHandler(ipcMain, store, binDir);
 
 // Install service
@@ -308,7 +309,10 @@ registerServiceInstallerHandler(ipcMain, store, () => mainWindow, downloadDir, b
 // Run service
 registerServiceRunnerHandler(ipcMain, store, binDir);
 
-// Projects Handlers
+// Penangan Nginx
+registerNginxHandler(ipcMain, configDir);
+
+// Penangan Proyek
 ipcMain.handle('get-projects', async () => {
     const projectsPath = path.join(configDir, 'data', 'projects.json');
     if (!fs.existsSync(projectsPath)) {
@@ -323,6 +327,7 @@ ipcMain.handle('get-projects', async () => {
     }
 });
 
+// Simpan proyek
 ipcMain.handle('save-projects', async (event, projects) => {
     const projectsPath = path.join(configDir, 'data', 'projects.json');
     const projectsDir = path.dirname(projectsPath);
@@ -338,58 +343,8 @@ ipcMain.handle('save-projects', async (event, projects) => {
     }
 });
 
-// Nginx Handlers
-ipcMain.handle('create-nginx-config', async (event, { filename, content, projectPath, domain }) => {
-    // 1. Ensure project root directory exists
-    if (projectPath && !fs.existsSync(projectPath)) {
-        try {
-            fs.mkdirSync(projectPath, { recursive: true });
-        } catch (e) {
-            console.error('Error creating project directory:', e);
-            return { success: false, error: `Gagal membuat folder project: ${e.message}` };
-        }
-    }
 
-    // 2. Update Windows Hosts file (Requires Admin via UAC)
-    let hostsWarning = null;
-    if (domain) {
-        const hostsPath = 'C:\\Windows\\System32\\drivers\\etc\\hosts';
-        try {
-            // Check if entry already exists (no admin needed for reading)
-            const hostsContent = fs.readFileSync(hostsPath, 'utf8');
-            if (!hostsContent.includes(domain)) {
-                // Trigger UAC via PowerShell with fixed newline and escaping
-                const entry = `127.0.0.1 ${domain}`;
-                // We use [char]10 + entry to ensure it starts on a new line correctly
-                const command = `powershell -Command "Start-Process powershell -ArgumentList '-NoProfile -Command \\\"Add-Content -Path ''${hostsPath}'' -Value ([char]10 + ''${entry}'')\\\"' -Verb RunAs"`;
-
-                exec(command, (error) => {
-                    if (error) {
-                        console.error('UAC Host update failed:', error);
-                    }
-                });
-            }
-        } catch (e) {
-            console.warn('Error reading hosts file:', e.message);
-            hostsWarning = "Gagal membaca file 'hosts'.";
-        }
-    }
-
-    // 3. Create Nginx config file
-    const nginxEnabledDir = path.join(configDir, 'data', 'nginx_enabled');
-    if (!fs.existsSync(nginxEnabledDir)) {
-        fs.mkdirSync(nginxEnabledDir, { recursive: true });
-    }
-    try {
-        fs.writeFileSync(path.join(nginxEnabledDir, `${filename}.conf`), content, 'utf-8');
-        return { success: true, warning: hostsWarning };
-    } catch (e) {
-        console.error('Error creating nginx config:', e);
-        return { success: false, error: e.message };
-    }
-});
-
-// Web Handlers
+// Penangan Web
 registerWebHandler(ipcMain, () => mainWindow, { store, configDir, binDir, downloadDir });
 
 app.on('window-all-closed', () => {

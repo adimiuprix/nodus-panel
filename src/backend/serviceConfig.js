@@ -13,6 +13,7 @@ const rootDir = app.isPackaged
 const usrDir = path.join(rootDir, 'usr');
 const packagesFile = path.join(usrDir, 'packages.json');
 
+// Konfigurasi default untuk setiap layanan
 const DEFAULT_CONFIG = {
     nginx: {
         url: 'https://nginx.org/download/nginx-1.26.3.zip',

@@ -9,7 +9,7 @@ import { configureNginx } from './serviceInstaller.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Find app root based on packaged vs development mode
+// Cari root aplikasi berdasarkan mode paket atau pengembangan
 const rootDir = app.isPackaged ? path.dirname(app.getPath('exe')) : path.resolve(__dirname, '../../');
 const actionsDir = path.join(rootDir, 'usr', 'actions');
 
@@ -17,7 +17,7 @@ if (!fs.existsSync(actionsDir)) {
     fs.mkdirSync(actionsDir, { recursive: true });
 }
 
-// Generate VBS files for each service
+// Buat file VBS untuk setiap layanan
 const VBS_SCRIPTS = {
 
     mysql: `Set WshShell = CreateObject("WScript.Shell")
@@ -53,7 +53,7 @@ End If`,
 
 };
 
-// Write out all scripts
+// Tulis semua skrip
 for (const [svc, content] of Object.entries(VBS_SCRIPTS)) {
     const vbsPath = path.join(actionsDir, `${svc}.vbs`);
     if (!fs.existsSync(vbsPath)) {
@@ -73,7 +73,7 @@ export function registerServiceRunnerHandler(ipcMain, store, binDir) {
         }
 
         if (!start) {
-            // Stop service
+            // Hentikan layanan
             return new Promise((resolve, reject) => {
                 exec(`cscript.exe //NoLogo "${vbsPath}" stop`, (error, stdout, stderr) => {
                     resolve({ success: true, message: stdout });
@@ -82,21 +82,15 @@ export function registerServiceRunnerHandler(ipcMain, store, binDir) {
         }
 
         // --- Start Service ---
-        // Need to find the exact exePath first
+        // Perlu menemukan exePath yang tepat terlebih dahulu
         const settingsKey = `version${serviceId.charAt(0).toUpperCase() + serviceId.slice(1)}`;
         const version = store.get(`appSettings.${settingsKey}`) || 'default';
 
         let subFolder = serviceId;
         const cleanVersion = version.replace(/^v/, '');
-        if (serviceId === 'mysql') {
-            const cleanVersion = version.replace(/^v/, '');
-            subFolder = path.join('mysql', `mysql-${cleanVersion}`);
-        } else if (serviceId === 'php') {
-            const cleanVersion = version.replace(/^v/, '');
-            subFolder = path.join('php', `php-${cleanVersion}`);
-        } else if (serviceId === 'nginx') {
-            const cleanVersion = version.replace(/^v/, '');
-            subFolder = path.join('nginx', `nginx-${cleanVersion}`);
+
+        if (['mysql', 'php', 'nginx'].includes(serviceId)) {
+            subFolder = path.join(serviceId, `${serviceId}-${cleanVersion}`);
         }
 
         const servicePath = path.join(binDir, subFolder);
@@ -117,20 +111,18 @@ export function registerServiceRunnerHandler(ipcMain, store, binDir) {
             return null;
         };
 
-        const exePath = findExe(servicePath, path.basename(service.exe));
-        if (!exePath) throw new Error(`Executable not found for ${serviceId}`);
+        const exePath = findExe(servicePath, path.basename(service.exe))
+            ?? (() => { throw new Error(`Executable not found for ${serviceId}`) })();
 
         if (serviceId === 'nginx') {
             await configureNginx(store, binDir);
         }
 
         return new Promise((resolve, reject) => {
-            exec(`cscript.exe //NoLogo "${vbsPath}" start "${exePath}"`, (error, stdout, stderr) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve({ success: true });
-                }
+            exec(`cscript.exe //NoLogo "${vbsPath}" start "${exePath}"`, (error) => {
+                error
+                    ? reject(error)
+                    : resolve({ success: true });
             });
         });
     });

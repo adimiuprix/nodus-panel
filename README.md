@@ -1,5 +1,7 @@
 # 🚀 Nodus Panel
 
+![Nodus Panel Preview](./assets/screenshoot.png)
+
 Selamat datang di **Nodus Panel**! Ini adalah *local development stack* yang ringan banget, khusus buat kamu pengguna Windows yang pengen server lokal yang nggak ribet, modern, dan powerful.
 
 Bayangkan XAMPP atau Laragon, tapi dibalut dengan teknologi modern (Electron + React) dan punya kontrol yang lebih presisi. Nodus Panel siap jadi teman setia kamu buat ngoding PHP, mainan MySQL, atau sekadar *hosting* web statis lewat Nginx.

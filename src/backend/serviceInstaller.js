@@ -6,7 +6,7 @@ import AdmZip from 'adm-zip';
 import { exec } from 'child_process';
 import { SERVICE_CONFIG } from './serviceConfig.js';
 
-// Helper: move file/dir with rename, fallback to copy+delete on EPERM
+// Helper: Pindahkan file/dir dengan ganti nama, fallback ke salin+hapus pada EPERM
 function moveSync(src, dest) {
     try {
         fs.renameSync(src, dest);
@@ -24,7 +24,7 @@ function moveSync(src, dest) {
     }
 }
 
-
+// Konfigurasi Nginx
 export async function configureNginx(store, binDir) {
     try {
         const nginxVerKey = store.get('appSettings.versionNginx') || 'default';
@@ -34,14 +34,14 @@ export async function configureNginx(store, binDir) {
 
         const rootDir = path.resolve(binDir, '..');
 
-        // Ensure nginx_enabled directory exists
+        // Pastikan direktori nginx_enabled ada
         const nginxEnabledDir = path.join(rootDir, 'data', 'nginx_enabled');
         const nginxEnabledPath = nginxEnabledDir.replace(/\\/g, '/');
         if (!fs.existsSync(nginxEnabledDir)) {
             fs.mkdirSync(nginxEnabledDir, { recursive: true });
         }
 
-        // Write minimalist nginx.conf — no server block, all handled via include
+        // Tulis nginx.conf minimal — tanpa blok server, semua ditangani melalui include
         const nginxConf = [
             '#user  nobody;',
             'worker_processes  1;',
@@ -85,7 +85,7 @@ export async function ensurePhpMyAdminConfig(binDir) {
 
         if (!fs.existsSync(pmaConfDir)) fs.mkdirSync(pmaConfDir, { recursive: true });
 
-        // Location-only block (included inside main server block in nginx.conf)
+        // Blok lokasi saja (disertakan di dalam blok server utama di nginx.conf)
         const pmaConfContent = `location /phpmyadmin {
     alias "${pmaDir}";
     index index.php index.html index.htm;
@@ -116,7 +116,7 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
     const version = store.get(`appSettings.${settingsKey}`) || 'default';
     const cleanVersion = version.replace(/^v/, '');
 
-    // Multi-version folder structure
+    // Struktur folder multi-versi
     let subFolder = serviceId;
     if (serviceId === 'mysql') subFolder = path.join('mysql', `mysql-${cleanVersion}`);
     else if (serviceId === 'php') subFolder = path.join('php', `php-${cleanVersion}`);
@@ -217,14 +217,14 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
             throw new Error('The downloaded file is not a valid ZIP archive.');
         }
 
-        // Create temp extract path
+        // Buat path ekstraksi sementara
         tempExtractPath = path.join(downloadDir, `temp_${serviceId}_${Date.now()}`);
         if (!fs.existsSync(tempExtractPath)) fs.mkdirSync(tempExtractPath, { recursive: true });
 
         const zip = new AdmZip(zipPath);
         zip.extractAllTo(tempExtractPath, true);
 
-        // Ensure target folder is clean to avoid EPERM rename issues on Windows
+        // Pastikan folder target bersih untuk menghindari masalah ganti nama EPERM di Windows
         if (fs.existsSync(extractPath)) {
             fs.rmSync(extractPath, { recursive: true, force: true });
         }
@@ -256,14 +256,14 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
                 }
             }
 
-            // Create datadir structure at app root /data/mysql
+            // Buat struktur direktori data di root aplikasi /data/mysql
             const appDataDir = store.get('appSettings.dataDir');
             const dataDir = path.join(appDataDir, 'mysql');
             if (!fs.existsSync(dataDir)) {
                 fs.mkdirSync(dataDir, { recursive: true });
             }
 
-            // Create init.sql to set root password to 'root'
+            // Buat init.sql untuk mengatur kata sandi root menjadi 'root'
             const initSqlPath = path.join(extractPath, 'init.sql');
             fs.writeFileSync(initSqlPath, `ALTER USER 'root'@'localhost' IDENTIFIED BY 'root';\nFLUSH PRIVILEGES;\n`);
 
@@ -272,7 +272,7 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
             const myIniContent = `[mysqld]\nbasedir="${extractPath.replace(/\\/g, '/')}"\ndatadir="${dataDir.replace(/\\/g, '/')}"\ninit-file="${initSqlPath.replace(/\\/g, '/')}"\n`;
             fs.writeFileSync(myIniPath, myIniContent);
 
-            // Initialize DB empty (without password first, then init.sql handles setting it to root on next start)
+            // Inisialisasi DB kosong (tanpa kata sandi terlebih dahulu, kemudian init.sql menangani pengaturan menjadi root pada start berikutnya)
             const mysqldExe = path.join(extractPath, 'bin', 'mysqld.exe');
             try {
                 const isDataDirEmpty = fs.readdirSync(dataDir).length === 0;
@@ -310,34 +310,34 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
                 }
             }
 
-            // Validate php.exe exists
+            // Validasi php.exe ada
             const phpExePath = path.join(extractPath, 'php.exe');
             if (!fs.existsSync(phpExePath)) {
                 throw new Error('Extract not valid: php.exe not found in extracted folder.');
             }
 
-            // Auto setup php.ini from php.ini-development if php.ini doesn't exist
+            // Pengaturan otomatis php.ini dari php.ini-development jika php.ini tidak ada.
             const phpIniPath = path.join(extractPath, 'php.ini');
             const phpIniDevPath = path.join(extractPath, 'php.ini-development');
             if (!fs.existsSync(phpIniPath) && fs.existsSync(phpIniDevPath)) {
                 fs.copyFileSync(phpIniDevPath, phpIniPath);
             }
 
-            // Comment out doc_root in php.ini to allow multi-site/virtual-hosts (fixes "No input file specified")
+            // Nonaktifkan baris `doc_root` di php.ini untuk memungkinkan multi-situs/virtual-host (memperbaiki kesalahan "Tidak ada file input yang ditentukan")
             if (fs.existsSync(phpIniPath)) {
                 let iniContent = fs.readFileSync(phpIniPath, 'utf8');
                 iniContent = iniContent.replace(/^doc_root\s*=/m, ';doc_root =');
                 fs.writeFileSync(phpIniPath, iniContent, 'utf8');
             }
 
-            // Uncomment extension_dir = "ext" for Windows so PHP can find extensions (mysqli, curl, etc.)
+            // Hapus tanda komentar pada baris `extension_dir = "ext"` untuk Windows agar PHP dapat menemukan ekstensi (mysqli, curl, dll.).
             if (fs.existsSync(phpIniPath)) {
                 let iniContent = fs.readFileSync(phpIniPath, 'utf8');
                 iniContent = iniContent.replace(/^;extension_dir\s*=\s*"ext"/m, 'extension_dir = "ext"');
                 fs.writeFileSync(phpIniPath, iniContent, 'utf8');
             }
 
-            // Validate PHP binary
+            // Validasi PHP binary
             mainWindow.webContents.send('install-progress', { serviceId, status: 'validating php...', progress: 95 });
 
             try {
@@ -357,7 +357,7 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
                 throw new Error('PHP validation failed. Binary cannot be executed.');
             }
 
-            // Check important extensions (optional warning)
+            // Periksa ekstensi penting (opsional warning)
             try {
                 const modulesOutput = await new Promise((resolve, reject) => {
                     exec(`"${phpExePath}" -m`, (error, stdout, stderr) => {
@@ -386,12 +386,12 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
                 console.warn('Could not check PHP extensions:', e.message);
             }
 
-            // Save installed version to store
+            // Simpan versi yang terinstal ke store
             const phpVersions = store.get('phpVersions') || {};
             phpVersions[cleanVersion] = extractPath;
             store.set('phpVersions', phpVersions);
         } else {
-            // For other services: If it extracted into a single subfolder, move things up
+            // Untuk layanan lain: Jika diekstrak ke satu subfolder, pindahkan ke atas
             const files = fs.readdirSync(tempExtractPath);
             if (files.length === 1 && fs.statSync(path.join(tempExtractPath, files[0])).isDirectory()) {
                 const subDir = path.join(tempExtractPath, files[0]);
@@ -400,7 +400,7 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
                     moveSync(path.join(subDir, f), path.join(extractPath, f));
                 }
             } else {
-                // Move everything from temp to final
+                // Pindahkan semuanya dari temp ke final
                 for (const f of files) {
                     moveSync(path.join(tempExtractPath, f), path.join(extractPath, f));
                 }
@@ -411,7 +411,7 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
             await ensurePhpMyAdminConfig(binDir);
         }
 
-        // Cleanup (Add retries and safe wrapper for Windows locks)
+        // Cleanup (Tambahkan percobaan ulang dan pembungkus aman untuk kunci Windows)
         try {
             if (fs.existsSync(tempExtractPath)) {
                 fs.rmSync(tempExtractPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
@@ -439,7 +439,7 @@ export async function installServiceInternal(serviceId, store, getMainWindow, do
     }
 }
 
-
+// Daftarkan handler IPC untuk instalasi layanan
 export function registerServiceInstallerHandler(ipcMain, store, getMainWindow, downloadDir, binDir) {
     ipcMain.handle('install-service', async (event, serviceId) => {
         return installServiceInternal(serviceId, store, getMainWindow, downloadDir, binDir);

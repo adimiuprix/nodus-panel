@@ -17,6 +17,8 @@ const ServiceCard = ({
                 </div>
                 <div className={`service-status-dot ${running ? 'running' : 'stopped'}`} />
             </div>
+
+            {/* Tampilkan jika layananb belum terinstall */}
             <div className="service-card-body">
                 <h4>{svc.name}</h4>
                 <p className="service-version">{svc.version}</p>
@@ -46,7 +48,8 @@ const ServiceCard = ({
                 )}
                 {(installationStatus || installationStatus === undefined) && <p className="service-port">Port: {svc.port}</p>}
             </div>
-            {/* Service Button - Only show if installed */}
+
+            {/* Tombol Layanan - Hanya tampilkan jika sudah terinstall */}
             {installationStatus && (
                 <div className="service-card-footer">
                     <button

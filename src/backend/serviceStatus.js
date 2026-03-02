@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { SERVICE_CONFIG } from './serviceConfig.js';
 
+// Daftarkan handler IPC untuk status layanan
 export function registerServiceStatusHandler(ipcMain, store, binDir) {
     ipcMain.handle('check-service-status', async (event, serviceId) => {
         const service = SERVICE_CONFIG[serviceId];
