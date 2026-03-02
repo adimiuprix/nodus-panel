@@ -15,3 +15,5 @@ bin/mysql
 bin/php
 data/
 logs/
+www/
+usr/
