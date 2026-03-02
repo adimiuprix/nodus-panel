@@ -5,6 +5,8 @@ import QuickActionButton from './components/QuickActionButton';
 import AboutModal from './components/AboutModal';
 import QuickCreateModal from './components/QuickCreateModal';
 import ProjectsTab from './page_tabs/ProjectsTab';
+import { getTimestamp } from './utils/helpers';
+import { useServiceActions } from './hooks/useServiceActions';
 
 // ===== SERVICE DATA =====
 const INITIAL_SERVICES = {
@@ -23,10 +25,6 @@ const FRAMEWORKS = [
     { id: 'blank', name: 'Blank', icon: 'fas fa-file-code' },
 ];
 
-// ===== HELPER =====
-function getTimestamp() {
-    return new Date().toLocaleTimeString('id-ID', { hour12: false });
-}
 
 // ===== TOAST COMPONENT =====
 function Toast({ toasts, onDismiss }) {
@@ -235,93 +233,16 @@ export default function App() {
         return () => clearInterval(id);
     }, []);
 
-    // ===== SERVICE ACTIONS =====
-    const toggleService = useCallback(async (name, start) => {
-        if (start) {
-            // Seamless check on-demand
-            if (window.require) {
-                try {
-                    const res = await window.require('electron').ipcRenderer.invoke('check-service-status', name);
-                    setInstallationStatus(prev => ({ ...prev, [name]: res.installed }));
-
-                    if (!res.installed) {
-                        addToast(`${activeServices[name].name} is not installed. Please install it first or check bin/ folder.`, 'warning');
-                        return;
-                    }
-                } catch (err) {
-                    addToast(`Failed to check ${activeServices[name].name} status: ${err.message}`, 'error');
-                    return;
-                }
-            }
-        }
-
-        const svc = activeServices[name];
-
-        if (window.require) {
-            try {
-                addTermLine(`[${getTimestamp()}] ${start ? 'Starting' : 'Stopping'} ${svc.name}...`, 'info');
-                await window.require('electron').ipcRenderer.invoke('run-service', name, start);
-            } catch (error) {
-                addTermLine(`[${getTimestamp()}] Failed to ${start ? 'start' : 'stop'} ${svc.name}: ${error.message}`, 'error');
-                addToast(`Error: ${error.message}`, 'error');
-                return;
-            }
-        }
-
-        setServices((prev) => ({ ...prev, [name]: start }));
-        if (start) {
-            addTermLine(`[${getTimestamp()}] ${svc.name} is running on port ${svc.port}`, 'success');
-            addToast(`${svc.name} started!`, 'success');
-        } else {
-            addTermLine(`[${getTimestamp()}] ${svc.name} stopped.`, 'warning');
-            addToast(`${svc.name} stopped.`, 'warning');
-        }
-    }, [addTermLine, addToast, installationStatus, activeServices]);
-
-    const startAll = useCallback(async () => {
-        const names = Object.keys(activeServices);
-        addToast('Starting all services...', 'info');
-        addTermLine(`[${getTimestamp()}] Starting all services...`, 'info');
-
-        for (const name of names) {
-            try {
-                await toggleService(name, true);
-            } catch (err) {
-                addTermLine(`[${getTimestamp()}] Failed to start ${activeServices[name]?.name || name}: ${err.message}`, 'error');
-                addToast(`Failed to start ${activeServices[name]?.name || name}`, 'error');
-            }
-        }
-
-        addTermLine(`[${getTimestamp()}] Start all completed.`, 'success');
-    }, [toggleService, activeServices, addToast, addTermLine]);
-
-    const stopAll = useCallback(async () => {
-        const names = Object.keys(activeServices);
-        addToast('Stopping all services...', 'warning');
-        addTermLine(`[${getTimestamp()}] Stopping all services...`, 'info');
-
-        for (const name of names) {
-            try {
-                await toggleService(name, false);
-            } catch (err) {
-                addTermLine(`[${getTimestamp()}] Failed to stop ${activeServices[name]?.name || name}: ${err.message}`, 'error');
-                addToast(`Failed to stop ${activeServices[name]?.name || name}`, 'error');
-            }
-        }
-
-        addTermLine(`[${getTimestamp()}] Stop all completed.`, 'success');
-    }, [toggleService, activeServices, addToast, addTermLine]);
-
-    const reloadAll = useCallback(() => {
-        addTermLine(`[${getTimestamp()}] Reloading all services...`, 'info');
-        addToast('Reloading all services...', 'info');
-        Object.entries(services).forEach(([name, running]) => {
-            if (running) {
-                setTimeout(() => addTermLine(`[${getTimestamp()}] ${activeServices[name].name} reloaded.`, 'success'), Math.random() * 500 + 200);
-            }
-        });
-        setTimeout(() => addToast('All services reloaded!', 'success'), 1000);
-    }, [services, addTermLine, addToast]);
+    // ===== SERVICE ACTIONS & HOOKS =====
+    const { toggleService, startAll, stopAll, reloadAll } = useServiceActions({
+        services,
+        setServices,
+        activeServices,
+        installationStatus,
+        setInstallationStatus,
+        addTermLine,
+        addToast
+    });
 
     // ===== TERMINAL COMMANDS =====
     const handleTerminalCommand = (input) => {
@@ -505,9 +426,6 @@ export default function App() {
 
             addTermLine(`[${getTimestamp()}] Project "${name}" created successfully!`, 'success');
             addToast(`Project "${name}" created!`, 'success');
-
-            // Refresh tab project jika saat ini aktif (akan di-remount jika kita toggle atau hanya menunggu untuk dikunjungi)
-            // Namun karena ProjectsTab dimuat di useEffect saat mount, ia akan menampilkan data baru ketika pengguna beralih ke sana.
 
         } catch (error) {
             console.error('Quick Create Error:', error);

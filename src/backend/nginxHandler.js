@@ -1,13 +1,16 @@
 import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { restartNginx } from './nginxUtils.js';
 
 /**
  * Daftarkan handler IPC terkait Nginx
  * @param {import('electron').IpcMain} ipcMain 
+ * @param {import('electron-store')} store
  * @param {string} configDir 
+ * @param {string} binDir
  */
-export function registerNginxHandler(ipcMain, configDir) {
+export function registerNginxHandler(ipcMain, store, configDir, binDir) {
     ipcMain.handle('create-nginx-config', async (event, { filename, content, projectPath, domain }) => {
         // 1. Pastikan direktori root project ada
         if (projectPath && !fs.existsSync(projectPath)) {
@@ -46,6 +49,16 @@ export function registerNginxHandler(ipcMain, configDir) {
         }
         try {
             fs.writeFileSync(path.join(nginxEnabledDir, `${filename}.conf`), content, 'utf-8');
+
+            // 4. Otomatis Restart Nginx agar konfigurasi baru langsung aktif
+            try {
+                await restartNginx(store, binDir);
+            } catch (restartErr) {
+                console.error('Auto restart Nginx failed:', restartErr);
+                // Kita tetap return true karena file sudah terbuat, tapi beri warning
+                return { success: true, warning: (hostsWarning ? hostsWarning + ' ' : '') + 'Konfigurasi terbuat tapi gagal me-restart Nginx otomatis.' };
+            }
+
             return { success: true, warning: hostsWarning };
         } catch (e) {
             console.error('Error creating nginx config:', e);

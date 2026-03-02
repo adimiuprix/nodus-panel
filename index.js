@@ -50,6 +50,8 @@ import { registerServiceInstallerHandler } from './src/backend/serviceInstaller.
 import { registerServiceRunnerHandler } from './src/backend/serviceRunner.js';
 import { registerWebHandler } from './src/backend/webHandler.js';
 import { registerNginxHandler } from './src/backend/nginxHandler.js';
+import { registerProjectHandler } from './src/backend/projectHandler.js';
+import { registerServiceReloaderHandler } from './src/backend/serviceReloader.js';
 
 // Pastikan direktori ada
 const downloadDir = path.join(configDir, 'download');
@@ -310,38 +312,13 @@ registerServiceInstallerHandler(ipcMain, store, () => mainWindow, downloadDir, b
 registerServiceRunnerHandler(ipcMain, store, binDir);
 
 // Penangan Nginx
-registerNginxHandler(ipcMain, configDir);
+registerNginxHandler(ipcMain, store, configDir, binDir);
 
 // Penangan Proyek
-ipcMain.handle('get-projects', async () => {
-    const projectsPath = path.join(configDir, 'data', 'projects.json');
-    if (!fs.existsSync(projectsPath)) {
-        return [];
-    }
-    try {
-        const data = fs.readFileSync(projectsPath, 'utf-8');
-        return JSON.parse(data);
-    } catch (e) {
-        console.error('Error reading projects.json:', e);
-        return [];
-    }
-});
+registerProjectHandler(ipcMain, store, configDir, binDir);
 
-// Simpan proyek
-ipcMain.handle('save-projects', async (event, projects) => {
-    const projectsPath = path.join(configDir, 'data', 'projects.json');
-    const projectsDir = path.dirname(projectsPath);
-    if (!fs.existsSync(projectsDir)) {
-        fs.mkdirSync(projectsDir, { recursive: true });
-    }
-    try {
-        fs.writeFileSync(projectsPath, JSON.stringify(projects, null, 4), 'utf-8');
-        return { success: true };
-    } catch (e) {
-        console.error('Error saving projects.json:', e);
-        return { success: false, error: e.message };
-    }
-});
+// Reload Layanan
+registerServiceReloaderHandler(ipcMain, store, binDir);
 
 
 // Penangan Web
